@@ -1,0 +1,1 @@
+import{a,r as n,y as o,z as i,j as u,L as c}from"./app-DqWjOAgA.js";function p({href:e,...s}){const{url:r}=a(),t=n.useSyncExternalStore(o,()=>i(r,e),()=>e);return u.jsx(c,{...s,href:t,replace:!0,preserveState:!1,preserveScroll:!1})}export{p as B};

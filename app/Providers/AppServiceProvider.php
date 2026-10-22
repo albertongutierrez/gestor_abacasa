@@ -12,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        \Laravel\Sanctum\Sanctum::ignoreMigrations();
+        // Sanctum 4 migrations are already included in the application schema.
     }
 
     /**

@@ -1,97 +1,160 @@
 # Gestor ABACASA
 
-Sistema de créditos y débitos en USD y DOP, con compras V2, costeo de transporte, créditos vinculados, correcciones auditadas y estados por fechas.
+Sistema de cuentas en dólares (USD) y pesos dominicanos (DOP): créditos, débitos, compras V2 de maíz/soya, transporte, balances a favor, dashboard y estados de cuenta PDF. Incluye empresas, sucursales, usuarios y permisos.
 
-Guía del sistema y acceso local: [docs/CUENTAS.md](docs/CUENTAS.md). Iniciar con `powershell -File scripts/start-local.ps1` y abrir http://127.0.0.1:8013. Credenciales en `.local-access.md`.
+## Tecnología
 
-## Documentación original de la plantilla
+- PHP 8.5.12 y Laravel 13.38.0, verificados el 22/10/2026. Las versiones exactas de las librerías están en `composer.lock`.
+- React 18, TypeScript, Inertia 2, TanStack Query, Tailwind y Vite.
+- MySQL; SQLite en memoria para pruebas.
+- Laravel Herd para ejecutar el proyecto localmente en Windows o macOS.
 
-Base independiente extraida de ENLACE para iniciar aplicaciones nuevas. No es una copia de la base de datos del sistema de facturacion.
+Los créditos y balances se mantienen separados por moneda. La tasa del dólar y el transporte se usan para calcular el costo de la compra, sin convertir la deuda USD a pesos. Los movimientos cancelados conservan auditoría.
 
-## Incluye
+## Instalar en otra computadora (Windows + Herd)
 
-- Laravel 10, PHP, MySQL, React 18, TypeScript, Inertia, Tailwind, Vite, Ziggy y Lucide. Se conservan los archivos de bloqueo de dependencias del proyecto original.
-- Login, cerrar sesion, recordarme, limitacion de intentos, recuperacion de contrasena, cambio de contrasena y verificacion de correo.
-- Perfil, empresas con logos, sucursales, selector de sucursal activa, usuarios y roles con permisos por empresa.
-- Super administrador global, administrador por empresa y roles personalizados. IDs publicos no secuenciales.
-- Interfaz adaptable, modo claro/oscuro, filtros, paginacion, confirmaciones, notificaciones y retorno contextual.
-- Migracion inicial limpia, permisos base idempotentes, pruebas aisladas y recursos de frontend compilados.
+### 1. Requisitos
 
-No incluye clientes, productos, inventario, POS, facturas, compras, caja, financiamientos, reportes comerciales, integraciones DGII, credenciales, logs ni archivos de empresas. Las librerias PDF/ESC-POS del archivo de dependencias se conservan por compatibilidad, pero no hay modulos de impresion ni servicios fiscales activos.
+Instala [Git](https://git-scm.com/downloads) y [Laravel Herd](https://herd.laravel.com/windows). Abre Herd y actualízalo desde su aplicación. Instala PHP **8.5**, con el parche estable más reciente, desde PHP Versions. No selecciones versiones RC/beta.
 
-## Crear un proyecto
+Instala Node.js 22 LTS o posterior compatible y MySQL 8.0/8.4. Puedes usar MySQL independiente, el servicio de XAMPP existente o MySQL en Herd Pro. **Herd gratuito no incluye un servidor MySQL**. No es necesario ejecutar Apache para servir el sitio con Herd.
 
-Extrae el ZIP en una carpeta nueva. Requisitos: PHP 8.1+ compatible con el lock (probado con 8.3), Composer 2, MySQL/MariaDB y Node compatible con Vite 5. PHP necesita las extensiones usuales de Laravel, PDO MySQL, mbstring, XML, curl, fileinfo, GD, zip y bcmath. Para pruebas, habilita PDO SQLite.
+Abre una terminal nueva y comprueba:
 
 ```powershell
-cd C:\ruta\mi-proyecto
+herd --version
+herd php:install 8.5
+herd php:update 8.5
+node --version
+npm --version
+git --version
+```
+
+PHP necesita BCMath, PDO MySQL, Mbstring, DOM/XML, cURL, Fileinfo, GD y Zip; las pruebas también requieren PDO SQLite. Verifica las extensiones con `herd php -m`.
+
+### 2. Clonar y enlazar el sitio
+
+```powershell
+git clone https://github.com/albertongutierrez/gestor_abacasa.git
+cd gestor_abacasa
 Copy-Item .env.example .env
-composer install
-php artisan key:generate
+herd link gestor-abacasa --isolate=8.5
+herd php -v
+herd composer install
+herd php artisan key:generate
 ```
 
-Configura una **base de datos nueva y vacia** en `.env`: `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`. No utilices la base de ENLACE. Cambia `APP_NAME`, `APP_URL`, `SESSION_COOKIE`, `VITE_APP_NAME` y el correo de salida.
+Usa `herd php` y `herd composer` para evitar que un PHP anterior de XAMPP o del PATH ejecute el proyecto. `key:generate` se ejecuta **solo al crear una instalación nueva**, nunca al actualizar una existente.
 
-```bash
-php artisan migrate --seed
-php artisan base:create-admin
-php artisan storage:link
+### 3. Crear y configurar la base de datos
+
+Crea una base nueva desde tu cliente MySQL:
+
+```sql
+CREATE DATABASE gestor_abacasa CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Edita `.env` con las credenciales de **esa computadora**:
+
+```dotenv
+APP_NAME="Gestor ABACASA"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://gestor-abacasa.test
+APP_TIMEZONE=America/Santo_Domingo
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=gestor_abacasa
+DB_USERNAME=tu_usuario_mysql
+DB_PASSWORD="tu_contrasena_mysql"
+SESSION_SECURE_COOKIE=false
+MAIL_MAILER=log
+ALLOW_REGISTRATION=false
+```
+
+No copies contraseñas de ejemplos ni publiques `.env`. Si existe `.env.local` en Windows, el proyecto lo utiliza antes que `.env`; `APP_ENV_FILE` permite seleccionar explícitamente otro archivo. Para una instalación nueva, trabaja únicamente con `.env`.
+
+### 4. Instalar las tablas, crear el administrador y compilar
+
+```powershell
+herd php artisan optimize:clear
+herd php artisan migrate --seed
+herd php artisan base:create-admin
+herd php artisan storage:link
 npm ci
 npm run build
-php artisan serve --host=127.0.0.1 --port=8012
+herd open gestor-abacasa
 ```
 
-El comando solicita la contrasena sin mostrarla y no crea empresas ni usuarios de ejemplo. Crea primero una empresa y luego su sucursal desde el menu. El super administrador puede seleccionar cualquier sucursal activa; los demas solo sus accesos autorizados.
+Abre **http://gestor-abacasa.test**. El comando de administrador solicita nombre, correo y contraseña sin mostrarla; no hay una contraseña pública predeterminada. Inicia sesión, crea la empresa y su sucursal, y selecciónala en el menú. Después configura usuarios, roles y permisos. El Logo 2 se usa en los PDFs y el detalle de compras.
 
-Los usuarios creados desde Usuarios deben verificar su correo. El primer super administrador creado por consola queda verificado. El registro publico esta desactivado; `ALLOW_REGISTRATION=true` habilita el registro y verificacion, pero **no** asigna empresa, sucursal o permisos automaticamente.
+Para HTTPS local, ejecuta `herd secure gestor-abacasa`, cambia `APP_URL=https://gestor-abacasa.test` y `SESSION_SECURE_COOKIE=true`, y ejecuta `herd php artisan optimize:clear`.
 
-## Revision local rapida
+### 5. Correo y desarrollo
 
-Solo en una copia nueva, sin `.env`, con Composer y npm instalados:
+`MAIL_MAILER=log` guarda mensajes en `storage/logs/laravel.log`; no envía correos reales. Para recuperación de contraseña y verificación por correo, configura SMTP (`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`). No compartas los logs: pueden contener enlaces de recuperación.
 
-```bash
-composer install
-php -d extension=pdo_sqlite scripts/init-local.php
+Para modificar la interfaz, usa `npm run dev` con Herd abierto. Para usar el sitio sin el servidor de Vite, ejecuta `npm run build`. Si Vite se cerró de forma inesperada y el navegador intenta cargar recursos del puerto 5173, elimina solamente `public/hot` y vuelve a compilar.
+
+## Actualizar una instalación existente
+
+Respalda primero la base MySQL, `.env` y los archivos de `storage/app/public`. Git no contiene clientes, movimientos, usuarios, logos cargados ni credenciales.
+
+```powershell
+git pull --ff-only
+herd php:update 8.5
+herd isolate 8.5 --site=gestor-abacasa
+herd composer install
 npm ci
 npm run build
-php -d extension=pdo_sqlite -S 127.0.0.1:8012 -t public scripts/serve.php
+herd php artisan migrate --seed
+herd php artisan optimize:clear
 ```
 
-Esto usa SQLite exclusivamente en `database/local.sqlite`, genera una clave y contrasena aleatorias y deja las credenciales en `.local-access.md`. No toca MySQL. Si PDO SQLite ya esta habilitado, omite `-d extension=pdo_sqlite`. La copia inicial queda sin empresas ni sucursales. El ZIP nunca incluye este entorno local.
+Usa `composer install` para reproducir el lock publicado; `composer update` se reserva para actualizar dependencias deliberadamente. No uses `migrate:fresh` ni regeneres `APP_KEY` sobre datos existentes. La actualización desde Laravel 10 conserva la estructura de la aplicación y las tablas existentes.
 
-## Correo
+## Migrar los datos a otra computadora
 
-Configura `MAIL_MAILER=smtp`, host, puerto, credenciales y `MAIL_FROM_ADDRESS` para enviar mensajes reales. Por defecto `MAIL_MAILER=log`: las notificaciones se escriben en `storage/logs/laravel.log`, no se envian a Internet. No compartas esos logs porque contienen enlaces de acceso. Revisa `APP_URL` antes de probar recuperacion y verificacion.
+Para una copia con datos existentes, importa un respaldo MySQL en una base vacía y copia `storage/app/public`. Conserva el `APP_KEY` de la instalación original mediante un canal privado. Ajusta las credenciales de MySQL y `APP_URL` al nuevo equipo, ejecuta `storage:link`, `migrate --seed` y `optimize:clear`. No crees otro administrador si ya existe. El repositorio permite instalar el sistema, pero no sustituye el respaldo de sus datos.
 
-## Permisos y nuevos modulos
+## Verificación
 
-Consulta [docs/EXTENDER.md](docs/EXTENDER.md). El middleware comprueba permisos en el servidor y deniega rutas sin politica. Ocultar un boton no reemplaza esta comprobacion.
-
-Los roles estan asociados a `office_id` en `role_user`; un permiso en una empresa no se hereda en otra. El super administrador es global. Un administrador no puede editar un usuario compartido con otra empresa, modificar roles globales ni delegar permisos que no tiene. Los roles inactivos no conceden acceso. Las empresas se administran solo por super administrador.
-
-## Pruebas
-
-```bash
-php -d extension=pdo_sqlite vendor/phpunit/phpunit/phpunit
+```powershell
+herd composer validate --strict
+herd composer check-platform-reqs
+herd php vendor/phpunit/phpunit/phpunit
 npm run build
+herd composer audit
 ```
 
-PHPUnit fuerza SQLite en memoria, sin acceder a la base de trabajo. Las pruebas verifican autenticacion, recuperacion, correo, instalacion, CRUD base, permisos, sucursales y limites entre empresas.
+Las pruebas fuerzan SQLite en memoria y no modifican MySQL. Cubren autenticación, permisos por empresa, CRUD, monedas, compras, correcciones, cancelaciones, créditos vinculados, dashboard y PDFs.
 
-## Produccion
+## Solución de problemas
 
-Configura el dominio con document root en `public/`. Nunca publiques la raiz del proyecto. Usa HTTPS, `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, un `APP_KEY` propio y credenciales SMTP/BD propias. `storage` y `bootstrap/cache` necesitan permisos de escritura; no uses 777.
+- **PHP incompatible:** comprueba `herd php -v`; usa los comandos con prefijo `herd` aunque `php -v` siga mostrando la versión de XAMPP.
+- **No conecta a MySQL:** inicia el servicio y comprueba host, puerto y credenciales. Herd y MySQL son servicios distintos.
+- **No abre `.test`:** abre Herd, revisa `herd links` y vuelve a ejecutar `herd link gestor-abacasa --isolate=8.5` desde el proyecto.
+- **Logo no visible:** ejecuta `herd php artisan storage:link`; en Windows puede requerir Modo desarrollador o terminal elevada para crear el enlace.
+- **Error 419:** comprueba el dominio y `APP_URL`, las cookies seguras según HTTP/HTTPS y ejecuta `optimize:clear`; vuelve a iniciar sesión.
+- **Error de permisos de escritura:** `storage` y `bootstrap/cache` deben permitir escritura al proceso PHP.
 
-Instala dependencias con `composer install --no-dev --optimize-autoloader`, aplica migraciones y ejecuta `php artisan optimize:clear`. No regeneres `APP_KEY` en despliegues posteriores. Compila localmente con `npm ci && npm run build` y publica `public/build` completo. Esta plantilla incluye el build inicial; cambiar `VITE_APP_NAME` requiere recompilar.
+## Despliegue en servidor
 
-Mantiene las versiones del sistema de origen, no promete ser la ultima version ni sustituye una revision de seguridad. Antes de lanzar un proyecto nuevo revisa soporte de Laravel/PHP y ejecuta `composer audit` y `npm audit`; prueba las actualizaciones en una rama aparte.
+Herd es un entorno **local**; publicar en Internet requiere un servidor o plataforma de hosting. Usa PHP 8.5, extensiones anteriores y MySQL, HTTPS y document root en `public/`. Configura `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, el dominio real y credenciales propias.
 
-## Empaquetar de nuevo
+En cada despliegue instala con `composer install --no-dev --optimize-autoloader`, compila con `npm ci` y `npm run build`, ejecuta `php artisan migrate --force` y `php artisan optimize:clear`. En una instalación nueva ejecuta también `php artisan db:seed --force`, crea el administrador y `php artisan storage:link`. Conserva `APP_KEY`, datos y archivos subidos entre despliegues. No sirvas la raíz del repositorio ni publiques `.env`.
 
-```bash
-php scripts/package.php ../mi-plantilla.zip
-```
+## Documentación
 
-El empaquetado usa una lista explicita de carpetas, incluye los compilados y excluye `.env`, claves, base local, credenciales, archivos subidos, caches, logs, `vendor`, `node_modules` y el historial Git. El ZIP no sobrescribe archivos existentes.
+- [Funcionamiento de cuentas](docs/CUENTAS.md)
+- [Extender módulos y permisos](docs/EXTENDER.md)
+- [Guía de actualización de Laravel 13](https://laravel.com/docs/13.x/upgrade)
+- [PHP estable](https://www.php.net/downloads.php)
+- [Laravel Herd para Windows](https://herd.laravel.com/windows)
 
-# gestor_abacasa
+## Estado de la actualización (22/10/2026)
+
+Validado con PHP 8.5.12 de Herd, Laravel 13.38.0, 32 pruebas (442 comprobaciones), compilación de producción y respuesta HTTP del sitio local. `composer audit` no reportó avisos de seguridad.
+
+Se aplicaron correcciones compatibles del frontend. `npm audit` aún reporta 10 avisos (7 altos y 3 moderados), relacionados con la cadena de Vite/Tailwind y PDF.js. Resolverlos requiere revisar actualizaciones mayores del frontend; no se aplicó `npm audit fix --force` para evitar cambiar esos componentes sin una migración y validación específica. Revisa `npm audit` antes de exponer un entorno de desarrollo o publicar una instalación en Internet.

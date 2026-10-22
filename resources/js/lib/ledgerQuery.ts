@@ -1,3 +1,4 @@
+import type { FormDataKeys } from '@inertiajs/core';
 import axios from 'axios';
 import { useForm, usePage } from '@inertiajs/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -38,7 +39,7 @@ export function useLedgerForm<T extends Record<string, any>>(initial: T) {
             if (axios.isAxiosError(error) && error.response?.status === 422) {
                 const errors = error.response.data.errors ?? {};
                 form.setError(Object.fromEntries(Object.entries(errors).map(([key, values]) => [key, Array.isArray(values) ? values[0] : String(values)])) as Record<keyof T, string>);
-            } else form.setError('request' as keyof T, ledgerError(error));
+            } else form.setError('request' as FormDataKeys<T>, ledgerError(error));
         },
     });
     const send = (method: 'post' | 'put', url: string, options: { onSuccess?: () => void; preserveScroll?: boolean } = {}) => {
