@@ -5,7 +5,7 @@ Sistema de cuentas en dólares (USD) y pesos dominicanos (DOP): créditos, débi
 ## Tecnología
 
 - PHP 8.5.12 y Laravel 13.38.0, verificados el 22/10/2026. Las versiones exactas de las librerías están en `composer.lock`.
-- React 18, TypeScript, Inertia 2, TanStack Query, Tailwind y Vite.
+- React 18, TypeScript, Inertia 2, TanStack Query, Tailwind CSS 4 y Vite 8.
 - MySQL; SQLite en memoria para pruebas.
 - Laravel Herd para ejecutar el proyecto localmente en Windows o macOS.
 
@@ -17,7 +17,7 @@ Los créditos y balances se mantienen separados por moneda. La tasa del dólar y
 
 Instala [Git](https://git-scm.com/downloads) y [Laravel Herd](https://herd.laravel.com/windows). Abre Herd y actualízalo desde su aplicación. Instala PHP **8.5**, con el parche estable más reciente, desde PHP Versions. No selecciones versiones RC/beta.
 
-Instala Node.js 22 LTS o posterior compatible y MySQL 8.0/8.4. Puedes usar MySQL independiente, el servicio de XAMPP existente o MySQL en Herd Pro. **Herd gratuito no incluye un servidor MySQL**. No es necesario ejecutar Apache para servir el sitio con Herd.
+Instala Node.js 24 LTS (o 22.12+ compatible) y MySQL 8.0/8.4. Puedes usar MySQL independiente, el servicio de XAMPP existente o MySQL en Herd Pro. **Herd gratuito no incluye un servidor MySQL**. No es necesario ejecutar Apache para servir el sitio con Herd.
 
 Abre una terminal nueva y comprueba:
 
@@ -157,4 +157,6 @@ En cada despliegue instala con `composer install --no-dev --optimize-autoloader`
 
 Validado con PHP 8.5.12 de Herd, Laravel 13.38.0, 32 pruebas (442 comprobaciones), compilación de producción y respuesta HTTP del sitio local. `composer audit` no reportó avisos de seguridad.
 
-Se aplicaron correcciones compatibles del frontend. `npm audit` aún reporta 10 avisos (7 altos y 3 moderados), relacionados con la cadena de Vite/Tailwind y PDF.js. Resolverlos requiere revisar actualizaciones mayores del frontend; no se aplicó `npm audit fix --force` para evitar cambiar esos componentes sin una migración y validación específica. Revisa `npm audit` antes de exponer un entorno de desarrollo o publicar una instalación en Internet.
+Frontend actualizado a Vite 8.3.5 y Tailwind CSS 4.3.3, con sus plugins compatibles. Se retiró PDF.js porque no se utiliza: los PDF se generan en el servidor con Dompdf. `npm audit` y `composer audit` reportan **0 vulnerabilidades** en esta revisión. La compilación de producción y las 32 pruebas (442 comprobaciones) finalizan correctamente.
+
+Tailwind 4 requiere navegadores modernos: Safari 16.4+, Chrome 111+ o Firefox 128+. Se conserva el tema claro/oscuro y la configuración de formularios del proyecto.
