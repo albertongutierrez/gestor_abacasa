@@ -143,7 +143,9 @@ Las pruebas fuerzan SQLite en memoria y no modifican MySQL. Cubren autenticació
 
 Herd es un entorno **local**; publicar en Internet requiere un servidor o plataforma de hosting. Usa PHP 8.5, extensiones anteriores y MySQL, HTTPS y document root en `public/`. Configura `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, el dominio real y credenciales propias.
 
-En cada despliegue instala con `composer install --no-dev --optimize-autoloader`, compila con `npm ci` y `npm run build`, ejecuta `php artisan migrate --force` y `php artisan optimize:clear`. En una instalación nueva ejecuta también `php artisan db:seed --force`, crea el administrador y `php artisan storage:link`. Conserva `APP_KEY`, datos y archivos subidos entre despliegues. No sirvas la raíz del repositorio ni publiques `.env`.
+El frontend se compila **localmente** y se publica con `public/build` completo en GitHub. El hosting descarga esos archivos: no necesita ejecutar npm ni compilar. Usa `bash scripts/deploy.sh --initial` para la primera instalación y `bash scripts/deploy.sh` para actualizar, con PHP 8.5 y Composer configurados. Conserva `APP_KEY`, datos y archivos subidos entre despliegues.
+
+Consulta [la guía de hosting y deploy key](docs/DESPLIEGUE.md) para configurar SSH, la clave GitHub de solo lectura, el dominio, el entorno privado y los comandos completos.
 
 ## Documentación
 
