@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    * { letter-spacing: 0; scrollbar-width: thin; }
+    html { color-scheme: light; }
+    html.dark { color-scheme: dark; }
+    body { min-width: 0; }
+}
+
+.app-shell { width: 100%; min-width: 0; overflow-x: clip; }
+.app-gutter {
+    --page-gutter: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+    padding-inline: var(--page-gutter);
+}
+@media (min-width: 640px) {
+    .app-gutter { --page-gutter: max(32px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)); }
+}
+
+.ledger-modal {
+    width: min(960px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    max-height: 90dvh;
+    border-radius: 16px;
+    overflow: hidden;
+}
+.ledger-modal-shell { display: flex; flex-direction: column; max-height: 90dvh; min-width: 0; }
+.ledger-modal-body { min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain; }
+.purchase-detail { table-layout: fixed; }
+.purchase-detail input, .purchase-detail select { min-width: 0; max-width: 100%; }
+.purchase-detail td { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+
+@media (max-width: 639px) {
+    .ledger-modal { inset: 0; margin: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+    .ledger-modal-shell { height: 100%; max-height: 100%; }
+    .ledger-modal-body { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .purchase-detail, .purchase-detail tbody { display: block; width: 100%; }
+    .purchase-detail thead { display: none; }
+    .purchase-detail tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; width: 100%; padding: 14px; }
+    .purchase-detail tr > td, .purchase-detail tr > th { min-width: 0; width: auto; padding: 0; text-align: left; white-space: normal; }
+    .purchase-detail td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: 13px; font-weight: 500; }
+    .purchase-detail input, .purchase-detail select { min-height: 48px; font-size: 16px; }
+    .purchase-detail th[scope="row"] { font-size: 16px; font-weight: 600; }
+}
+@media (min-width: 400px) and (max-width: 639px) {
+    .purchase-detail tr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .purchase-detail tr > :first-child, .purchase-detail tr > :last-child { grid-column: 1 / -1; }
+}
+
+/* Purchase detail presented as a single invoice sheet, independent of app theme. */
+.purchase-invoice{background:#fff;color:#1e293b;border:1px solid #dce3e7;border-radius:4px;padding:32px;box-shadow:0 8px 30px #00000010;color-scheme:light;min-width:0}
+.invoice-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;border-bottom:3px solid #17634d;padding-bottom:22px}
+.invoice-brand{display:flex;align-items:center;gap:12px;min-width:0}.invoice-brand img{width:90px;height:90px;object-fit:contain}.invoice-brand strong{font-size:20px}.invoice-brand p{font-size:12px;color:#64748b;margin-top:4px}
+.invoice-reference{text-align:right;overflow-wrap:anywhere}.invoice-reference h1{font-size:23px;font-weight:700;letter-spacing:1px}.invoice-reference p{font-size:14px;margin:6px 0}.invoice-reference span{font-size:13px;color:#64748b}
+.invoice-parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px 0}.invoice-label{font-size:10px;font-weight:700;letter-spacing:1px;color:#64748b}.invoice-parties h2{font-size:17px;font-weight:700;margin:5px 0}.invoice-parties p{font-size:13px;margin-top:5px;overflow-wrap:anywhere}
+.invoice-lines{width:100%;border-collapse:collapse;font-size:13px}.invoice-lines th{background:#f1f5f4;font-size:11px;text-transform:uppercase;color:#526662;text-align:right;padding:12px 8px;border-block:1px solid #dce3e7}.invoice-lines td{text-align:right;padding:16px 8px;border-bottom:1px solid #e2e8f0;overflow-wrap:anywhere}.invoice-lines th:first-child,.invoice-lines td:first-child{text-align:left}.invoice-lines small{display:block;font-size:11px;color:#64748b;margin-top:4px}
+.invoice-bottom{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px}.invoice-notes h2{font-size:12px;font-weight:700;margin-bottom:8px}.invoice-notes p{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;color:#64748b}.invoice-totals>div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;font-size:13px}.invoice-totals dd{font-weight:700;text-align:right;overflow-wrap:anywhere}.invoice-totals .invoice-final{border-top:2px solid #17634d;margin-top:6px;padding-top:14px;color:#17634d;font-weight:700}.invoice-final dd{font-size:21px}.invoice-final small{display:block;font-size:11px;font-weight:400}.purchase-invoice footer{border-top:1px solid #e2e8f0;margin-top:32px;padding-top:12px;font-size:10px;color:#64748b}
+@media(max-width:639px){.purchase-invoice{padding:16px}.invoice-heading{gap:14px;align-items:flex-start;flex-direction:column;padding-bottom:16px}.invoice-brand img{width:68px;height:68px}.invoice-reference{text-align:left}.invoice-reference h1{font-size:19px}.invoice-parties{grid-template-columns:1fr;gap:16px;padding:18px 0}.invoice-lines thead{display:none}.invoice-lines,.invoice-lines tbody{display:block}.invoice-lines tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:14px 0;border-block-start:1px solid #dce3e7}.invoice-lines td{padding:0;border:0;text-align:left;min-width:0}.invoice-lines td:first-child{grid-column:1/-1}.invoice-lines td:before{content:attr(data-label);display:block;font-size:10px;color:#64748b;margin-bottom:3px}.invoice-bottom{grid-template-columns:1fr;gap:24px;margin-top:16px}.invoice-totals{grid-row:1}.purchase-invoice footer{margin-top:24px}}
+
+/* The on-screen invoice follows the selected application theme. */
+.dark .purchase-invoice{background:#0f172a;color:#e2e8f0;border-color:#334155;color-scheme:dark;box-shadow:0 8px 30px #00000020}
+.dark .invoice-brand img{background:#fff;border-radius:8px;padding:4px}
+.dark .invoice-heading{border-color:#34d399}
+.dark .invoice-brand p,.dark .invoice-reference span,.dark .invoice-label,.dark .invoice-lines small,.dark .invoice-lines td:before,.dark .invoice-notes p,.dark .purchase-invoice footer{color:#94a3b8}
+.dark .invoice-lines th{background:#1e293b;color:#cbd5e1;border-color:#334155}
+.dark .invoice-lines td,.dark .invoice-lines tr,.dark .purchase-invoice footer{border-color:#334155}
+.dark .invoice-totals .invoice-final{color:#6ee7b7;border-color:#34d399}
+@media print{
+    .dark .purchase-invoice{background:#fff;color:#1e293b;border-color:#dce3e7;color-scheme:light;box-shadow:none}
+    .dark .invoice-heading,.dark .invoice-totals .invoice-final{border-color:#17634d}
+    .dark .invoice-brand p,.dark .invoice-reference span,.dark .invoice-label,.dark .invoice-lines small,.dark .invoice-lines td:before,.dark .invoice-notes p,.dark .purchase-invoice footer{color:#526662}
+    .dark .invoice-lines th{background:#f1f5f4;color:#526662;border-color:#dce3e7}
+    .dark .invoice-lines td,.dark .invoice-lines tr,.dark .purchase-invoice footer{border-color:#e2e8f0}
+    .dark .invoice-totals .invoice-final{color:#17634d}
+}

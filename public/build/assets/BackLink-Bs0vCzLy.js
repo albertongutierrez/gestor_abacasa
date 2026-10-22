@@ -1,0 +1,1 @@
+import{X as a,r as n,w as o,y as i,j as c,x as u}from"./app-Aw7UrWBb.js";function l({href:e,...r}){const{url:s}=a(),t=n.useSyncExternalStore(o,()=>i(s,e),()=>e);return c.jsx(u,{...r,href:t,replace:!0,preserveState:!1,preserveScroll:!1})}export{l as B};
