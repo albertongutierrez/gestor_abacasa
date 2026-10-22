@@ -70,7 +70,7 @@ mkdir -p bootstrap/cache storage/app/public storage/framework/cache/data storage
     if (!config("app.key") && ($argv[1] ?? "") !== "--initial") {
         fwrite(STDERR, "Falta APP_KEY. Para una instalación nueva utiliza --initial; para una existente restaura su clave original.\n"); exit(1);
     }
-' "$MODE"
+' -- "$MODE"
 if [[ "$MODE" == --initial ]]; then
     # Generate only when empty. Never replace the key of an existing installation.
     "$PHP_BIN" -r 'require "vendor/autoload.php"; $a = require "bootstrap/app.php"; $a->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); exit(config("app.key") ? 0 : 2);' || {
