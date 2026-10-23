@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified', EnsureActiveBranch::class, 'permission.ro
     Route::get('/purchases/{entry}/print', [\App\Http\Controllers\LedgerController::class, 'purchasePrint'])->name('purchases.print');
     Route::post('/accounts', [\App\Http\Controllers\LedgerController::class, 'account'])->name('accounts.store');
     Route::put('/accounts/{account}', [\App\Http\Controllers\LedgerController::class, 'account'])->name('accounts.update');
+    Route::get('/accounts/{account}/payment-context', [\App\Http\Controllers\LedgerController::class, 'paymentContext'])->name('payment-context');
     Route::post('/accounts/{account}/entries', [\App\Http\Controllers\LedgerController::class, 'store'])->name('store');
     Route::put('/accounts/{account}/entries/{entry}', [\App\Http\Controllers\LedgerController::class, 'update'])->name('update');
     Route::get('/accounts/{account}/statement', [\App\Http\Controllers\LedgerController::class, 'print'])->name('print');

@@ -5,11 +5,12 @@ const format = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 2,
 });
 
-export default function MoneyInput({value, onChange, className, max = '999999999.99'}: {
+export default function MoneyInput({value, onChange, className, max = '999999999.99', min = '0.01'}: {
     value: string;
     onChange: (value: string) => void;
     className?: string;
     max?: string;
+    min?: string;
 }) {
     const [editing, setEditing] = useState(false);
     const number = Number(value);
@@ -30,8 +31,8 @@ export default function MoneyInput({value, onChange, className, max = '999999999
         }}
         onBlur={event => {
             setEditing(false);
-            if (value !== '' && (!Number.isFinite(number) || number < 0.01 || number > Number(max))) {
-                event.target.setCustomValidity(`Ingresa un monto entre 0.01 y ${format.format(Number(max))}.`);
+            if (value !== '' && (!Number.isFinite(number) || number < Number(min) || number > Number(max))) {
+                event.target.setCustomValidity(`Ingresa un monto entre ${min} y ${format.format(Number(max))}.`);
             } else {
                 event.target.setCustomValidity('');
                 if (value !== '') onChange(number.toFixed(2));

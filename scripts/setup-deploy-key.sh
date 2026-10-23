@@ -19,4 +19,4 @@ cat "$KEY.pub"
 printf '\nSettings: https://github.com/albertongutierrez/gestor_abacasa/settings/keys\n'
 printf 'Clave privada (conservar en este servidor): %s\n' "$KEY"
 printf '\nAntes de conectar, compara la huella del servidor GitHub con https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints\n'
-printf 'Clonar con: GIT_SSH_COMMAND="ssh -i %s -o IdentitiesOnly=yes" git clone git@github.com:albertongutierrez/gestor_abacasa.git\n' "$KEY"
+printf 'Clonar con: GIT_SSH_COMMAND="ssh -i %s -o IdentitiesOnly=yes" git clone ssh://git@ssh.github.com:443/albertongutierrez/gestor_abacasa.git\n' "$KEY"

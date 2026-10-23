@@ -37,7 +37,7 @@ class LedgerTest extends TestCase
 
     private function data(array $overrides = []): array
     {
-        return array_replace(['kind' => 'credit', 'currency' => 'USD', 'date' => '2026-10-10', 'amount' => '100.00', 'comment' => 'Prueba', 'linked' => false, 'excess' => 'keep', 'items' => []], $overrides);
+        return array_replace(['kind' => 'credit', 'currency' => 'USD', 'date' => '2026-10-10', 'amount' => '100.00', 'comment' => 'Prueba', 'linked' => false, 'excess' => 'keep', 'items' => [], 'settlement_month' => '2026-10', 'product' => 'Maíz', 'credit_used' => '0'], $overrides);
     }
 
     private function postEntry(array $data, ?Account $account = null)

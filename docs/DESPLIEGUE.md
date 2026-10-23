@@ -4,7 +4,7 @@ El frontend se compila en la computadora de desarrollo. `public/build` y su mani
 
 ## Datos para cPanel
 
-El dominio previsto es `abacasa.pdv.com.do`. En **Dominios**, crea o configura el subdominio con raíz `apps/gestor_abacasa/public` relativa al directorio de tu cuenta, sin compartir la raíz del dominio principal. Configura su DNS y AutoSSL. En **MultiPHP Manager** selecciona PHP 8.5 para ese dominio.
+El dominio previsto es `abacasa.pdv.com.do`. En **Dominios**, crea o configura el subdominio con raíz `abacasa.pdv.com.do/public` relativa al directorio de tu cuenta, sin compartir la raíz del dominio principal. Configura su DNS y AutoSSL. En **MultiPHP Manager** selecciona PHP 8.5 para ese dominio.
 
 Desde **Avanzado → Terminal**, comprueba las rutas antes de desplegar:
 
@@ -20,7 +20,7 @@ En servidores EasyApache con PHP 8.5 instalado, una ruta habitual es `/opt/cpane
 ## 1. Preparar el dominio y PHP
 
 - Configura PHP 8.5 tanto en el dominio como en la terminal. Suelen ser ejecutables diferentes: pide al hosting la ruta de PHP CLI y del script `composer` o `composer.phar`.
-- El proyecto completo debe quedar fuera de la carpeta pública. Configura el document root del dominio como `/home/USUARIO/apps/gestor_abacasa/public`. Esta es la única carpeta que debe servir el dominio. Si el panel obliga a usar `public_html`, confirma primero cómo cambiar el document root o enlazar esa carpeta a `public`; no copies el proyecto completo dentro.
+- El proyecto completo debe quedar fuera de la carpeta pública. Configura el document root del dominio como `/home/USUARIO/abacasa.pdv.com.do/public`. Esta es la única carpeta que debe servir el dominio. Si el panel obliga a usar `public_html`, confirma primero cómo cambiar el document root o enlazar esa carpeta a `public`; no copies el proyecto completo dentro.
 - Activa HTTPS, crea la base MySQL y su usuario. Permite escritura en `storage` y `bootstrap/cache` al usuario PHP. No uses permisos 777.
 - Antes de actualizar una instalación existente, respalda la base, el archivo de entorno y `storage/app/public` desde el panel o tu sistema de copias.
 
@@ -32,29 +32,32 @@ Sube `scripts/setup-deploy-key.sh` a tu directorio privado mediante el panel/SFT
 bash setup-deploy-key.sh
 ```
 
+GitHub se conecta por SSH mediante `ssh.github.com:443`, porque este hosting rechaza el puerto 22.
+
 El script crea `~/.ssh/abacasa_github_ed25519` y muestra únicamente la clave pública `.pub`. No reemplaza claves existentes. En [GitHub → Settings → Deploy keys](https://github.com/albertongutierrez/gestor_abacasa/settings/keys), pulsa **Add deploy key**, título `Hosting ABACASA`, pega la clave pública y deja **Allow write access desmarcado**. La privada permanece en el hosting; no se sube al repositorio ni se comparte por chat.
 
 Conecta a GitHub y verifica su huella contra las [huellas oficiales](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints) antes de aceptarla:
 
 ```bash
-ssh -i ~/.ssh/abacasa_github_ed25519 -o IdentitiesOnly=yes -T git@github.com
+ssh -i ~/.ssh/abacasa_github_ed25519 -o IdentitiesOnly=yes -T -p 443 git@ssh.github.com
 ```
 
 GitHub confirma la autenticación y avisa que no proporciona shell; puede terminar con código 1 aunque la autenticación sea correcta.
 
+Si `abacasa.pdv.com.do` ya contiene archivos del hosting, conserva su `.env` y clona en una carpeta temporal vacía; copia después con `cp -an ORIGEN/. /home/USUARIO/abacasa.pdv.com.do/`. No borres ni sobrescribas los archivos existentes. El siguiente ejemplo supone que el directorio destino todavía no existe.
+
 ```bash
-mkdir -p ~/apps
-cd ~/apps
+cd ~
 GIT_SSH_COMMAND="ssh -i $HOME/.ssh/abacasa_github_ed25519 -o IdentitiesOnly=yes" \
-  git clone git@github.com:albertongutierrez/gestor_abacasa.git
-cd gestor_abacasa
+  git clone ssh://git@ssh.github.com:443/albertongutierrez/gestor_abacasa.git abacasa.pdv.com.do
+cd abacasa.pdv.com.do
 git config core.sshCommand "ssh -i $HOME/.ssh/abacasa_github_ed25519 -o IdentitiesOnly=yes"
 ```
 
 ## 3. Configurar el entorno privado
 
 ```bash
-cp .env.example .env
+cp -n .env.example .env
 chmod 600 .env
 ```
 
@@ -112,7 +115,7 @@ Revisa lo añadido antes del commit; incluye los nuevos hashes y las eliminacion
 En la terminal SSH del hosting, después del respaldo:
 
 ```bash
-cd ~/apps/gestor_abacasa
+cd /home/sruostyg/abacasa.pdv.com.do
 export PHP_BIN=/RUTA/DEL/HOSTING/php
 export COMPOSER_BIN=/RUTA/DEL/HOSTING/composer.phar
 bash scripts/deploy.sh

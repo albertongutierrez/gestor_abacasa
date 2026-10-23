@@ -13,6 +13,7 @@ foreach (['users' => 'users', 'offices' => 'settings.offices', 'branch-offices' 
 $routes['settings.roles.index'] = 'roles.view';
 $routes['settings.roles.*'] = 'roles.manage';
 $routes['ledger.index'] = 'ledger.view';
+$routes['ledger.payment-context'] = 'ledger.view';
 $routes['ledger.purchases'] = 'ledger.view';
 $routes['ledger.purchases.show'] = 'ledger.view';
 $routes['ledger.purchases.cancel'] = 'ledger.purchase.update';

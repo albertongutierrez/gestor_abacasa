@@ -162,3 +162,7 @@ Validado con PHP 8.5.12 de Herd, Laravel 13.38.0, 32 pruebas (442 comprobaciones
 Frontend actualizado a Vite 8.3.5 y Tailwind CSS 4.3.3, con sus plugins compatibles. Se retiró PDF.js porque no se utiliza: los PDF se generan en el servidor con Dompdf. `npm audit` y `composer audit` reportan **0 vulnerabilidades** en esta revisión. La compilación de producción y las 32 pruebas (442 comprobaciones) finalizan correctamente.
 
 Tailwind 4 requiere navegadores modernos: Safari 16.4+, Chrome 111+ o Firefox 128+. Se conserva el tema claro/oscuro y la configuración de formularios del proyecto.
+
+## Cierres por mes y producto (23/10/2026)
+
+Compras V2 permite indicar el mes del producto. Las cuentas que utilizan compras habilitan los paneles Maíz/Soya, con pagos por mes y producto y saldo disponible sin aplicación automática. El pago puede combinar saldo a favor y dinero nuevo sin duplicar débitos. Consulta las reglas de datos históricos y correcciones en [Cuentas](docs/CUENTAS.md#cierre-por-mes-y-producto-en-compras-v2). Validado con 42 pruebas (537 comprobaciones), compilación de producción y revisión de la interfaz a 390 px.

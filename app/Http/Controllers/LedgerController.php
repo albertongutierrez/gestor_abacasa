@@ -6,6 +6,7 @@ use App\Http\Requests\LedgerRequest;
 use App\Models\Account;
 use App\Models\LedgerEntry;
 use App\Services\LedgerService;
+use App\Services\PurchaseSettlementService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -42,7 +43,7 @@ class LedgerController extends Controller
     public function index(Request $r, LedgerService $service)
     {
         $filters = $this->period($r);
-        $accounts = $this->accounts($r)->orderBy('name')->get();
+        $accounts = $this->accounts($r)->withExists(['entries as uses_purchases' => fn ($q) => $q->where('kind', 'purchase')])->orderBy('name')->get();
         $totals = LedgerEntry::whereIn('account_id', $accounts->pluck('id'))->selectRaw("account_id, currency, SUM(CASE WHEN kind = 'debit' THEN -amount_minor ELSE amount_minor END) AS balance")->groupBy('account_id', 'currency')->get()->groupBy('account_id');
         $selected = $r->query('account') ? $accounts->firstWhere('public_id', $r->query('account')) : null;
         if ($r->query('account')) {
@@ -51,9 +52,11 @@ class LedgerController extends Controller
 
         $payload = ['accounts' => $accounts->map(fn ($a) => [
             'id' => $a->public_id, 'name' => $a->name, 'document' => $a->document, 'phone' => $a->phone, 'notes' => $a->notes,
+            'uses_purchases' => (bool) $a->uses_purchases,
             'balances' => ($totals[$a->id] ?? collect())->pluck('balance', 'currency')]),
             'selected' => $selected?->public_id, 'filters' => $filters,
-            'statement' => $selected ? $service->statement($selected, $filters['from'], $filters['to']) : null];
+            'statement' => $selected ? $service->statement($selected, $filters['from'], $filters['to']) : null,
+            'settlement' => $selected && $selected->uses_purchases ? app(PurchaseSettlementService::class)->summary($selected) : null];
 
         return $r->expectsJson()
             ? response()->json($payload)->header('Cache-Control', 'private, no-store')
@@ -81,6 +84,15 @@ class LedgerController extends Controller
             'document' => $a->document, 'phone' => $a->phone, 'notes' => $a->notes, 'balances' => []]),
             'filters' => [...$filters, 'account' => $selected?->public_id ?? ''], 'purchases' => $purchases, 'total' => (int) $total];
         return $r->expectsJson() ? response()->json($payload)->header('Cache-Control', 'private, no-store') : Inertia::render('Ledger/Purchases', $payload);
+    }
+
+    public function paymentContext(Request $r, string $account, PurchaseSettlementService $settlements)
+    {
+        $data = $r->validate(['date' => ['required', 'date_format:Y-m-d'], 'entry' => ['nullable', 'uuid']]);
+        $a = $this->accounts($r)->where('public_id', $account)->firstOrFail();
+        $editing = !empty($data['entry']) ? $a->entries()->where('public_id', $data['entry'])->where('kind', 'debit')->whereNull('source_id')->firstOrFail() : null;
+        return response()->json(['enabled' => $settlements->enabled($a), ...$settlements->summary($a, $data['date'], $editing)])
+            ->header('Cache-Control', 'private, no-store');
     }
 
     public function purchaseShow(Request $r, string $entry)
@@ -220,6 +232,7 @@ class LedgerController extends Controller
         if (!is_file($logo)) $logo = public_path('brand/abacasa-transparent.png');
         $pdf = app('dompdf.wrapper')->loadView('ledger.statement', ['account' => $a, 'filters' => $filters,
             'issuer' => $this->purchaseIssuer($r),
+            'settlement' => app(PurchaseSettlementService::class)->enabled($a) ? app(PurchaseSettlementService::class)->summary($a, $filters['to']) : null,
             'logoData' => 'data:'.mime_content_type($logo).';base64,'.base64_encode(file_get_contents($logo)),
             'statement' => $service->statement($a, $filters['from'], $filters['to'])])->setPaper('a4', 'portrait');
         $pdf->render();

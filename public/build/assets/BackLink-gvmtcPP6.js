@@ -1,0 +1,1 @@
+import{E as e,O as t,n,t as r,w as i,x as a,y as o}from"./app-CE97P5RQ.js";var s=t(e(),1),c=o();function l({href:e,...t}){let{url:o}=i(),l=(0,s.useSyncExternalStore)(n,()=>r(o,e),()=>e);return(0,c.jsx)(a,{...t,href:l,replace:!0,preserveState:!1,preserveScroll:!1})}export{l as t};

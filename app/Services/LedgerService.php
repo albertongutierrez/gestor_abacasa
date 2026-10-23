@@ -53,6 +53,7 @@ class LedgerService
                 ...$entry->details, 'original_amount_minor' => $entry->amount_minor,
                 'cancelled_at' => now()->toIso8601String(), 'cancelled_by' => $user->id,
             ]], $user);
+            app(PurchaseSettlementService::class)->assertValid($account);
         });
     }
 
@@ -93,6 +94,8 @@ class LedgerService
                     'cancelled_at' => now()->toIso8601String(), 'cancelled_by' => $user->id,
                 ]], $user);
             }
+            app(PurchaseSettlementService::class)->assertValid($account);
+            foreach ($children->where('kind', 'credit') as $child) app(PurchaseSettlementService::class)->assertValid($child->account);
         }, 3);
     }
 
@@ -116,6 +119,25 @@ class LedgerService
             $currency = $data['currency'];
             $details = [];
             $amount = self::minor($data['amount'] ?? '0');
+            $settlements = app(PurchaseSettlementService::class);
+            $productPayment = $data['kind'] === 'debit' && $currency === 'USD' && $settlements->enabled($account);
+            $used = self::minor($data['credit_used'] ?? '0');
+            $applied = 0;
+            if (!$productPayment && $used) {
+                throw ValidationException::withMessages(['credit_used' => 'El saldo disponible se aplica únicamente a compras V2 en dólares.']);
+            }
+            if ($productPayment) {
+                if (empty($data['settlement_month']) || !in_array($data['product'] ?? null, ['Maíz', 'Soya'], true)) {
+                    throw ValidationException::withMessages(['settlement_month' => 'Selecciona el mes y el producto al que corresponde este pago.']);
+                }
+                $context = $settlements->summary($account, $data['date'], $entry->exists ? $entry : null);
+                $group = collect($context['groups'])->first(fn ($g) => $g['month'] === $data['settlement_month'] && $g['product'] === $data['product']);
+                $pending = $group['pending_minor'] ?? 0;
+                if ($used > $context['available_minor'] || $used > $pending) {
+                    throw ValidationException::withMessages(['credit_used' => 'El saldo a utilizar no puede superar el disponible ni el pendiente del mes y producto.']);
+                }
+                $applied = $used + min($amount, max(0, $pending - $used));
+            }
             if ($data['kind'] === 'purchase') {
                 if (count($data['items']) !== 1) {
                     throw ValidationException::withMessages(['items' => 'La compra V2 permite un solo producto: maíz o soya.']);
@@ -132,11 +154,12 @@ class LedgerService
                 $quantity = (string) $data['items'][0]['quantity'];
                 $transport = self::roundedMinor(bcmul($quantity, (string) $data['transport_price'], 12));
                 $cost = self::roundedMinor(bcmul(bcdiv((string) $amount, '100', 2), $data['exchange_rate'], 8)) + $transport;
-                $details = ['items' => $data['items'], 'exchange_rate' => $data['exchange_rate'],
+                $details = ['settlement_month' => $data['settlement_month'] ?? substr($data['date'], 0, 7),
+                    'items' => $data['items'], 'exchange_rate' => $data['exchange_rate'],
                     'transport_price' => $data['transport_price'], 'transport_quantity' => $quantity,
                     'transport' => bcdiv((string) $transport, '100', 2), 'cost_minor' => $cost];
             }
-            if ($amount <= 0 || $amount > 99999999999) {
+            if (($amount <= 0 && !($productPayment && $used > 0 && $amount === 0)) || $amount > 99999999999) {
                 throw ValidationException::withMessages(['amount' => 'Monto fuera del rango permitido.']);
             }
             $children = $entry->exists ? $entry->children()->get() : collect();
@@ -148,6 +171,7 @@ class LedgerService
             $target = null;
             $linkedAmount = 0;
             if ($linked) {
+                if ($amount <= 0) throw ValidationException::withMessages(['linked' => 'El crédito vinculado necesita dinero nuevo; no se crea con saldo reutilizado.']);
                 $target = Account::where('office_id', $account->office_id)->where('public_id', $data['linked_account'])->firstOrFail();
                 if ($target->id === $account->id) {
                     throw ValidationException::withMessages(['linked_account' => 'Elige un proveedor diferente.']);
@@ -160,6 +184,8 @@ class LedgerService
             if ($data['kind'] === 'debit') {
                 $details = ['excess' => $data['excess'], 'linked' => (bool) $linked, 'linked_account' => $target?->public_id,
                     'linked_mode' => $linked ? $data['linked_mode'] : 'full', 'linked_amount' => $linked ? bcdiv((string) $linkedAmount, '100', 2) : '', 'linked_comment' => $data['linked_comment'] ?? ''];
+                if ($productPayment) $details = [...$details, 'settlement_month' => $data['settlement_month'], 'product' => $data['product'],
+                    'credit_used_minor' => $used, 'applied_minor' => $applied];
             }
             $entry = $this->persist($entry, ['account_id' => $account->id, 'created_by' => $entry->created_by ?? $user->id,
                 'kind' => $data['kind'], 'currency' => $currency, 'date' => $data['date'], 'amount_minor' => $amount,
@@ -177,13 +203,17 @@ class LedgerService
                     ->where(fn ($q) => $q->whereNull('source_id')->orWhere('source_id', '!=', $entry->id))
                     ->where(fn ($q) => $q->where('date', '<', $entry->date)->orWhere(fn ($q) => $q->where('date', $entry->date)->where('id', '<', $entry->id)))
                     ->get()->sum(fn ($e) => self::signed($e));
-                $refundAmount = max(0, $amount - max(0, $prior));
+                $refundAmount = $productPayment ? $amount - ($applied - $used) : max(0, $amount - max(0, $prior));
             }
             if ($refund || $refundAmount) {
                 $this->persist($refund ?? new LedgerEntry, ['account_id' => $account->id, 'created_by' => $refund?->created_by ?? $user->id,
                     'source_id' => $entry->id, 'kind' => 'refund', 'currency' => $currency, 'date' => $data['date'], 'amount_minor' => $refundAmount,
                     'comment' => 'Devolución del excedente del abono', 'details' => null], $user);
             }
+
+            $settlements->assertValid($account);
+            if ($target) $settlements->assertValid($target);
+            if ($oldLink && (!$target || $oldLink->account_id !== $target->id)) $settlements->assertValid($oldLink->account);
 
             return $entry;
         }, 3);
@@ -201,7 +231,7 @@ class LedgerService
             $credit = 0;
             $rows = [];
             foreach ($all->where('date', '>=', $from)->where('date', '<=', $to) as $e) {
-                if (! $e->amount_minor) {
+                if (! $e->amount_minor && (empty($e->details['applied_minor']) || !empty($e->details['cancelled_at']))) {
                     continue;
                 }
                 $balance += self::signed($e);
