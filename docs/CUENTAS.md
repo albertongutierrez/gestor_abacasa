@@ -28,7 +28,7 @@ El lápiz corrige compras, créditos y débitos. Los créditos vinculados y devo
 
 La compra tiene **fecha del movimiento** y **mes del producto** independientes. El mes se guarda como año/mes y se presenta en español en el listado, detalle y PDF. Las compras anteriores sin mes guardado usan el mes de su fecha; se pueden corregir con el permiso habitual de editar compras.
 
-Cuando la cuenta tiene historial de compras V2, Estados de cuenta habilita **Maíz y soya**. Ese panel separa compras, pagos aplicados y pendiente por producto y mes. El estado general conserva el balance neto y los movimientos de dinero; el panel muestra por separado las compras pendientes y el saldo disponible sin aplicar. El panel usa el mes del producto, independientemente del período por fechas del estado general.
+Cuando la cuenta tiene historial de compras V2, Estados de cuenta agrega las pestañas **Maíz** y **Soya** en la misma fila que **Dólares** y **Pesos**. Cada producto muestra su estado en tabla, con compras, pagos aplicados y balance, filtrado por mes del producto. No utiliza bloques ni un selector de vista separado. El estado general conserva el balance neto y los movimientos de dinero; el panel muestra por separado las compras pendientes y el saldo disponible sin aplicar. El panel usa el mes del producto, independientemente del período por fechas del estado general.
 
 Los débitos en USD de estas cuentas requieren mes y producto. El formulario consulta el pendiente y el saldo disponible a la fecha del pago. Permite seleccionar cuánto saldo utilizar y agregar dinero nuevo. Solo el dinero nuevo aumenta el débito contable: reutilizar saldo no vuelve a descontarlo del estado general. Un pago puede usar únicamente saldo disponible indicando cero en dinero nuevo.
 
